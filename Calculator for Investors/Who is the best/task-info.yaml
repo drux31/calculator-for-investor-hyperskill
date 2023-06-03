@@ -1,0 +1,731 @@
+type: edu
+custom_name: Who is the best?
+files:
+- name: main.py
+  visible: true
+  text: |
+    # write your code here
+  learner_created: false
+- name: test/__init__.py
+  visible: false
+  learner_created: false
+- name: test/tests.py
+  visible: false
+  text: |
+    import os
+    import sqlite3
+
+    from hstest import CheckResult, StageTest, dynamic_test, TestedProgram
+
+    db_name = "investor.db"
+    table_names = ["companies", "financial"]
+    files_to_delete = ("investor.db",)
+
+    main_menu = """
+    MAIN MENU
+    0 Exit
+    1 CRUD operations
+    2 Show top ten companies by criteria
+    """
+
+    top_ten_menu = """
+    TOP TEN MENU
+    0 Back
+    1 List by ND/EBITDA
+    2 List by ROE
+    3 List by ROA
+    """
+
+    ebitda_msg = """TICKER ND/EBITDA
+    DUK 6.4
+    SO 6.02
+    CHTR 4.55
+    NEE 4.39
+    TMUS 4.19
+    DE 4.16
+    T 3.94
+    MCD 3.77
+    VZ 3.57
+    CAT 3.34"""
+
+    roe_msg = """TICKER ROE
+    AMGN 6.43
+    AAPL 1.4
+    MA 1.22
+    UPS 0.84
+    ABBV 0.7
+    QCOM 0.68
+    LMT 0.63
+    ADP 0.62
+    LLY 0.59
+    TXN 0.55"""
+
+    roa_msg = """TICKER ROA
+    TXN 0.31
+    AAPL 0.27
+    FB 0.24
+    MA 0.23
+    HD 0.23
+    AMAT 0.23
+    NVDA 0.22
+    PM 0.22
+    GOOG 0.21
+    QCOM 0.2"""
+
+    welcome_msg = "Welcome to the Investor Program!"
+    farewell_msg = "Have a nice day!"
+    ask_option_msg = "Enter an option:"
+    invalid_option_msg = "Invalid option!"
+
+    # index 0 entered value, index 1 expected value
+    test_data_1 = [
+        {
+            "test_values": [
+                ("2", (top_ten_menu + ask_option_msg)),
+                ("199", (invalid_option_msg + main_menu + ask_option_msg)),
+                ("2", (top_ten_menu + ask_option_msg)),
+                ("1", (ebitda_msg + main_menu + ask_option_msg)),
+                ("0", farewell_msg),
+            ]
+        },
+        {
+            "test_values": [
+                ("2", (top_ten_menu + ask_option_msg)),
+                ("2", (roe_msg + main_menu + ask_option_msg)),
+                ("0", farewell_msg),
+            ]
+        },
+        {
+            "test_values": [
+                ("2", (top_ten_menu + ask_option_msg)),
+                ("3", (roa_msg + main_menu + ask_option_msg)),
+                ("0", farewell_msg),
+            ]
+        },
+    ]
+
+
+    def delete_files(arr):
+        for file_name in arr:
+            if os.path.exists(file_name):
+                os.remove(file_name)
+
+
+    class InvestorTest(StageTest):
+        def after_all_tests(self):
+            delete_files(files_to_delete)
+
+        # testing entered vs expected
+        @dynamic_test(data=test_data_1)
+        def test1(self, dict_):
+            t = TestedProgram()
+            output = t.start().strip()
+            text = welcome_msg.strip() + main_menu.strip() + ask_option_msg.strip()
+            if output.replace("\n", "") != text.replace("\n", ""):
+                # print(repr(output))
+                # print(repr(text))
+                return CheckResult.wrong(
+                    f"Your program should output:\n{text}\ninstead of:\n{output}")
+            for test_values in dict_.values():
+                for item in test_values:
+                    output = t.execute(item[0]).strip()
+                    text = item[1]
+                    if output.replace("\n", "") != text.replace("\n", ""):
+                        # print(repr(output))
+                        # print(repr(text))
+                        return CheckResult.wrong(
+                            f"Your program should output:\n{text}\ninstead of:\n{output}")
+            return CheckResult.correct()
+
+        # testing if database exists
+        @dynamic_test()
+        def test2(self):
+            if not os.path.exists(db_name):
+                return CheckResult.wrong(
+                    f"'{db_name}' does not exist!")
+            return CheckResult.correct()
+
+        # testing if tables exist
+        @dynamic_test()
+        def test3(self):
+            conn = sqlite3.connect(db_name)
+            cur = conn.cursor()
+            for table in table_names:
+                query = f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table}';"
+                cur.execute(query)
+                r = cur.fetchall()
+                if not r or r[0][0] != table:
+                    conn.close()
+                    return CheckResult.wrong(f"Table {table} not found!")
+            conn.close()
+            return CheckResult.correct()
+
+
+    if __name__ == '__main__':
+        InvestorTest().run_tests()
+  learner_created: false
+- name: tests.py
+  visible: false
+  text: |
+    from test.tests import InvestorTest
+
+    if __name__ == '__main__':
+        InvestorTest().run_tests()
+  learner_created: false
+- name: create_company.py
+  visible: true
+  text: |+
+    # write your code here
+    from Stage2 import Companies, Financial, engine, Session
+
+    # create a company
+    def create_company():
+        print("Enter ticker (in the format of 'MOON'): ")
+        ticker = input()
+
+        print("Enter company (in the format of 'Moon Corp'): ")
+        company = input()
+
+        print("Enter industries (in the format of 'Technology'): ")
+        industries = input()
+
+        print("Enter ebitda (in the format of '987654321'): ")
+        ebitda = input()
+
+        print("Enter sales (in the format of '987654321'): ")
+        sales = input()
+
+        print("Enter net profit (in the format of '987654321'): ")
+        net_profit = input()
+
+        print("Enter market price (in the format of '987654321'): ")
+        market_price = input()
+
+        print("Enter net debt (in the format of '987654321'): ")
+        net_debt = input()
+
+        print("Enter assets (in the format of '987654321'): ")
+        assets = input()
+
+        print("Enter equity (in the format of '987654321'): ")
+        equity = input()
+
+        print("Enter cash equivalents (in the format of '987654321'): ")
+        cash_equivalent = input()
+
+        print("Enter liabilities (in the format of '987654321'): ")
+        liabilities = input()
+
+        # data insertion
+        session = Session(bind=engine, autoflush=False)
+        #creating company object
+        stmt_company = Companies(ticker=ticker, name=company, sector=industries)
+
+        stmt_financial = Financial(ticker=ticker,
+                                   ebitda = float(ebitda) if len(ebitda) > 0 else None,
+                                   sales = float(sales) if len(sales) > 0 else None,
+                                   net_profit = float(net_profit) if len(net_profit) > 0 else None,
+                                   market_price = float(market_price) if len(market_price) > 0 else None,
+                                   net_debt = float(net_debt) if len(ebitda) > 0 else None,
+                                   assets = float(assets) if len(assets) > 0 else None,
+                                   equity = float(equity) if len(equity) > 0 else None,
+                                   cash_equivalents = float(cash_equivalent) if len(cash_equivalent) > 0 else None,
+                                   liabilities = float(liabilities) if len(liabilities) > 0 else None)
+
+        session.add_all([stmt_company, stmt_financial])
+        session.commit()
+
+  learner_created: true
+- name: Delete.py
+  visible: true
+  text: |-
+    # write your code here
+    from sqlalchemy import update, select
+    from Stage2 import Companies, Financial, engine, Session
+
+    def delete_company():
+        print("Enter company name:")
+        cname = input()
+
+        # getting the session
+        session = Session(bind=engine, autoflush=False)
+
+        # getting the list of the companies from the database
+        stmt_companies = select(Companies).where(Companies.name.like('%' + cname + '%'))
+
+        # listing the companies
+        result = session.scalars(stmt_companies)
+
+        cmp_list = []
+        for cmp in result:
+            cmp_list.append(cmp)
+
+        if len(cmp_list) == 0:
+            print("Company not found!")
+        else:
+            for (i, cm) in enumerate(cmp_list):
+                print(i, cm.name)
+
+            print("Enter company number:")
+            num = input()
+            # Get the company
+            ticker = cmp_list[int(num)].ticker
+            stmt_c = select(Companies).where(Companies.ticker == ticker)
+            stmt_f = select(Financial).where(Financial.ticker == ticker)
+
+            #deleting the finance
+            for f in session.scalars(stmt_f):
+                session.delete(f)
+
+            #deleting the company
+            for c in session.scalars(stmt_c):
+                session.delete(c)
+
+        session.commit()
+  learner_created: true
+- name: companies.csv
+  visible: true
+  text: |-
+    ticker,name,sector
+    AAPL,Apple Inc,Electronic Technology
+    MSFT,Microsoft Corp.,Technology Services
+    GOOG,Alphabet Inc (Google) Class C,Technology Services
+    AMZN,"Amazon.com, Inc.",Retail Trade
+    FB,"Meta Platforms, Inc.",Technology Services
+    JNJ,Johnson & Johnson,Health Technology
+    UNH,UnitedHealth Group Incorporated,Health Services
+    NVDA,NVIDIA Corporation,Electronic Technology
+    V,Visa Inc.,Finance
+    XOM,Exxon Mobil Corporation,Energy Minerals
+    JPM,JP Morgan Chase & Co.,Finance
+    PG,Procter & Gamble Company (The),Consumer Non-Durables
+    WMT,Walmart Inc.,Retail Trade
+    CVX,Chevron Corporation,Energy Minerals
+    MA,Mastercard Incorporated,Commercial Services
+    HD,"Home Depot, Inc. (The)",Retail Trade
+    PFE,"Pfizer, Inc.",Health Technology
+    BAC,Bank of America Corporation,Finance
+    LLY,Eli Lilly and Company,Health Technology
+    ABBV,AbbVie Inc.,Health Technology
+    KO,Coca-Cola Company (The),Consumer Non-Durables
+    AVGO,Broadcom Inc.,Electronic Technology
+    MRK,"Merck & Company, Inc.",Health Technology
+    PEP,"PepsiCo, Inc.",Consumer Non-Durables
+    TMO,Thermo Fisher Scientific Inc,Health Technology
+    VZ,Verizon Communications Inc.,Communications
+    CSCO,"Cisco Systems, Inc.",Technology Services
+    ABT,Abbott Laboratories,Health Technology
+    COST,Costco Wholesale Corporation,Retail Trade
+    DIS,Walt Disney Company (The),Consumer Services
+    CMCSA,Comcast Corporation,Consumer Services
+    ADBE,Adobe Inc.,Technology Services
+    ORCL,Oracle Corporation,Technology Services
+    DHR,Danaher Corporation,Health Technology
+    ACN,Accenture plc,Technology Services
+    INTC,Intel Corporation,Electronic Technology
+    NKE,"Nike, Inc.",Consumer Non-Durables
+    MCD,McDonalds Corporation,Consumer Services
+    PM,Philip Morris International Inc,Consumer Non-Durables
+    BMY,Bristol-Myers Squibb Company,Health Technology
+    WFC,Wells Fargo & Company,Finance
+    TXN,Texas Instruments Incorporated,Electronic Technology
+    TMUS,"T-Mobile US, Inc.",Communications
+    CRM,"Salesforce, Inc.",Technology Services
+    LIN,Linde plc,Process Industries
+    AMD,Advanced Micro Devices Inc,Electronic Technology
+    UPS,"United Parcel Service, Inc.",Transportation
+    QCOM,QUALCOMM Incorporated,Electronic Technology
+    T,AT&T Inc.,Communications
+    MS,Morgan Stanley,Finance
+    UNP,Union Pacific Corporation,Transportation
+    NEE,"NextEra Energy, Inc.",Utilities
+    MDT,Medtronic plc.,Health Technology
+    RTX,Raytheon Technologies Corporation,Electronic Technology
+    COP,ConocoPhillips,Energy Minerals
+    HON,Honeywell International Inc.,Producer Manufacturing
+    AMGN,Amgen Inc.,Health Technology
+    BX,Blackstone Inc.,Finance
+    CVS,CVS Health Corporation,Retail Trade
+    LOW,"Lowes Companies, Inc.",Retail Trade
+    SCHW,Charles Schwab Corporation (The),Finance
+    IBM,International Business Machines Corporation,Technology Services
+    AXP,American Express Company,Finance
+    LMT,Lockheed Martin Corporation,Electronic Technology
+    ANTM,"Anthem, Inc.",Health Services
+    SPGI,S&P Global Inc.,Commercial Services
+    DE,Deere & Company,Producer Manufacturing
+    CAT,"Caterpillar, Inc.",Producer Manufacturing
+    GS,"Goldman Sachs Group, Inc. (The)",Finance
+    INTU,Intuit Inc.,Technology Services
+    AMAT,"Applied Materials, Inc.",Producer Manufacturing
+    MO,"Altria Group, Inc.",Consumer Non-Durables
+    C,"Citigroup, Inc.",Finance
+    BLK,"BlackRock, Inc.",Finance
+    PYPL,"PayPal Holdings, Inc.",Commercial Services
+    CB,Chubb Limited,Finance
+    SYK,Stryker Corporation,Health Technology
+    ADP,"Automatic Data Processing, Inc.",Technology Services
+    MMM,3M Company,Producer Manufacturing
+    MDLZ,"Mondelez International, Inc.",Consumer Non-Durables
+    DUK,Duke Energy Corporation (Holding Company),Utilities
+    ADI,"Analog Devices, Inc.",Electronic Technology
+    BKNG,Booking Holdings Inc. Common Stock,Consumer Services
+    GE,General Electric Company,Producer Manufacturing
+    NOW,"ServiceNow, Inc.",Technology Services
+    EL,"Estee Lauder Companies, Inc. (The)",Consumer Non-Durables
+    SBUX,Starbucks Corporation,Consumer Services
+    CI,Cigna Corporation,Health Services
+    MU,"Micron Technology, Inc.",Electronic Technology
+    GILD,"Gilead Sciences, Inc.",Health Technology
+    CHTR,"Charter Communications, Inc.",Consumer Services
+    NFLX,"Netflix, Inc.",Technology Services
+    SO,Southern Company (The),Utilities
+    ISRG,"Intuitive Surgical, Inc.",Health Technology
+    MMC,"Marsh & McLennan Companies, Inc.",Finance
+    TGT,Target Corporation,Retail Trade
+    ZTS,Zoetis Inc.,Health Technology
+    BA,Boeing Company (The),Electronic Technology
+  learner_created: true
+- name: Stage1.py
+  visible: true
+  text: |2+
+
+    def main_menu():
+        # Main menu
+        print("MAIN MENU")
+        print("0 Exit")
+        print("1 CRUD operations")
+        print("2 Show top ten companies by criteria")
+        print()
+
+
+    def crud_menu():
+        print("CRUD MENU")
+        print("0 Back")
+        print("1 Create a company")
+        print("2 Read a company")
+        print("3 Update a company")
+        print("4 Delete a company")
+        print("5 List all companies")
+        print()
+
+
+    def top_ten_menu():
+        print("TOP TEN MENU")
+        print("0 Back")
+        print("1 List by ND/EBITDA")
+        print("2 List by ROE")
+        print("3 List by ROA")
+        print()
+
+
+    def get_input():
+        print("Enter an option: ")
+        test = input()
+        if test.isdigit():
+            return int(test)
+        else:
+            return -1
+
+
+  learner_created: true
+- name: Read.py
+  visible: true
+  text: |-
+    # write your code here
+    from sqlalchemy import select
+    from Stage2 import Companies, Financial, engine, Session
+
+
+    def read_company():
+        print("Enter company name:")
+        cname = input()
+
+        # getting the session
+        session = Session(bind=engine)
+
+        # getting the list of the companies from the database
+        stmt_companies = select(Companies).where(Companies.name.like('%' + cname + '%'))
+
+        # listing the companies
+        result = session.scalars(stmt_companies)
+
+        cmp_list = []
+        for cmp in result:
+            cmp_list.append(cmp)
+
+        if len(cmp_list) == 0:
+            print("Company not found!")
+        else:
+            for (i, cm) in enumerate(cmp_list):
+                print(i, cm.name)
+
+            print("Enter company number:")
+            num = input()
+
+            c_ticker = cmp_list[int(num)].ticker
+            stmt_fin = select(Financial).where(Financial.ticker == c_ticker)
+
+            print(c_ticker, cmp_list[int(num)].name)
+            for f in session.scalars(stmt_fin):
+                PE = None
+                PS = None
+                PB = None
+                ND_EBITDA = None
+                ROE = None
+                ROA = None
+                LA = None
+
+                if (f.market_price != None and f.net_profit != None and f.net_profit > 0):
+                    PE = round(f.market_price/f.net_profit, 2)
+
+                if (f.market_price != None and f.sales != None and f.sales > 0):
+                    PS = round(f.market_price/f.sales, 2)
+
+                if (f.market_price != None and f.assets != None and f.assets > 0):
+                    PB = round(f.market_price/f.assets, 2)
+
+                if (f.net_debt != None and f.ebitda != None and f.ebitda > 0):
+                    ND_EBITDA = round(f.net_debt/f.ebitda, 2)
+
+                if (f.net_profit != None and f.equity != None and f.equity > 0):
+                    ROE = round(f.net_profit/f.equity, 2)
+
+                if (f.net_profit != None and f.assets != None and f.assets > 0):
+                    ROA = round(f.net_profit/f.assets, 2)
+
+                if (f.liabilities != None and f.assets != None and f.assets > 0):
+                    LA = round(f.liabilities/f.assets, 2)
+
+                print('P/E = ' + str(PE))
+                print('P/S = ' + str(PS))
+                print('P/B = ' + str(PB))
+                print('ND/EBITDA = ' + str(ND_EBITDA))
+                print('ROE = ' + str(ROE))
+                print('ROA = ' + str(ROA))
+                print('L/A = ' + str(LA))
+
+    def read_all():
+        # getting the session
+        session = Session(bind=engine, autoflush=False)
+
+        # getting the list of the companies from the database
+        stmt_c = select(Companies).order_by(Companies.ticker)
+        print("COMPANY LIST")
+        for c in session.scalars(stmt_c):
+            print(c.ticker, c.name, c.sector)
+
+        #session.close()
+  learner_created: true
+- name: Update.py
+  visible: true
+  text: |-
+    # write your code here
+    from sqlalchemy import update, select
+    from Stage2 import Companies, Financial, engine, Session
+
+    def update_company():
+        print("Enter company name:")
+        cname = input()
+
+        # getting the session
+        session = Session(bind=engine)
+
+        # getting the list of the companies from the database
+        stmt_companies = select(Companies).where(Companies.name.like('%' + cname + '%'))
+
+        # listing the companies
+        result = session.scalars(stmt_companies)
+
+        cmp_list = []
+        for cmp in result:
+            cmp_list.append(cmp)
+
+        if len(cmp_list) == 0:
+            print("Company not found!")
+        else:
+            for (i, cm) in enumerate(cmp_list):
+                print(i, cm.name)
+
+            print("Enter company number:")
+            num = input()
+            #Get the company
+            #company = select(Companies).where(Companies.name == cmp_list[int(num)].name)
+            ticker = cmp_list[int(num)].ticker
+            #get the finance
+            stmt_f = select(Financial).where(Financial.ticker == ticker)
+            #c_finance = session.scalars(stmt_f).one()
+            for c_finance in session.scalars(stmt_f):
+                #Update everything
+                #ebitda
+                print("Enter ebitda (in the format of '987654321'): ")
+                ed = input()
+                c_finance.ebitda = float(ed) if len(ed) > 0 else None
+
+                #sales
+                print("Enter sales (in the format of '987654321'): ")
+                sa = input()
+                c_finance.sales = float(sa) if len(sa) > 0 else None
+
+                #net_profit
+                print("Enter net profit (in the format of '987654321'): ")
+                np = input()
+                c_finance.net_profit = float(np) if len(np) > 0 else None
+
+                #market_price
+                print("Enter market price (in the format of '987654321'): ")
+                mp = input()
+                c_finance.market_price = float(mp) if len(mp) > 0 else None
+
+                #net_debt
+                print("Enter net debt (in the format of '987654321'): ")
+                nd = input()
+                c_finance.net_debt = float(nd) if len(nd) > 0 else None
+
+                #assets
+                print("Enter assets (in the format of '987654321'): ")
+                ass = input()
+                c_finance.assets = float(ass) if len(ass) > 0 else None
+
+                #equity
+                print("Enter equity (in the format of '987654321'): ")
+                eq = input()
+                c_finance.equity = float(eq) if len(eq) > 0 else None
+
+                #cash_equivalents
+                print("Enter cash equivalents (in the format of '987654321'): ")
+                ce = input()
+                c_finance.cash_equivalents = float(ce) if len(ce) > 0 else None
+
+                #liabilities
+                print("Enter liabilities (in the format of '987654321'): ")
+                li = input()
+                c_finance.liabilities = float(li) if len(li) > 0 else None
+
+        session.commit()
+  learner_created: true
+- name: Stage2.py
+  visible: true
+  text: |
+    # write your code here
+    import csv
+    from sqlalchemy import create_engine
+    from sqlalchemy import Column, String, Float
+    from sqlalchemy.orm import sessionmaker, Query, declarative_base
+    from collections import defaultdict
+
+    # Creating the engine for the connection
+    engine = create_engine('sqlite:///investor.db', echo=False)
+    Session = sessionmaker(bind=engine)
+
+    Base = declarative_base()
+
+
+    class Companies(Base):
+        __tablename__ = 'companies'
+        ticker = Column(String(30), primary_key=True)
+        name = Column(String(30))
+        sector = Column(String(30))
+
+
+    class Financial(Base):
+        __tablename__ = 'financial'
+        ticker = Column(String(30), primary_key=True)
+        ebitda = Column(Float)
+        sales = Column(Float)
+        net_profit = Column(Float)
+        market_price = Column(Float)
+        net_debt = Column(Float)
+        assets = Column(Float)
+        equity = Column(Float)
+        cash_equivalents = Column(Float)
+        liabilities = Column(Float)
+
+
+    def create_db(reader1, reader2):
+        # Create the new table
+        Base.metadata.create_all(engine)
+
+        # data insertion
+        session = Session()
+        for comp, vals in reader1.items():
+            # print(vals)
+            session.merge(Companies(ticker=vals['ticker'], name=vals['name'], sector=vals['sector']))
+
+        for f, vals in reader2.items():
+            # print(f[0]['ticker'])
+            session.merge(Financial(ticker=vals['ticker'],
+                                  ebitda=vals['ebitda'],
+                                  sales=vals['sales'],
+                                  net_profit=vals['net_profit'],
+                                  market_price=vals['market_price'],
+                                  net_debt=vals['net_debt'],
+                                  assets=vals['assets'],
+                                  equity=vals['equity'],
+                                  cash_equivalents=vals['cash_equivalents'],
+                                  liabilities=vals['liabilities']
+                                  ))
+        session.commit()
+
+
+    def store_data():
+        dict_companies = defaultdict(dict)
+        dict_financial = defaultdict(dict)
+        count = 0
+        with open("../../companies.csv") as company:
+            companies_file_reader = csv.DictReader(company, delimiter=",")
+            for line in companies_file_reader:
+                if line['ticker'] == '':
+                    line['ticker'] = None
+                if line['name'] == '':
+                    line['name'] = None
+                if line['sector'] == '':
+                    line['sector'] = None
+                # print(line)
+                dict_companies[count] = {'ticker': line['ticker'], 'name': line['name'], 'sector': line['sector']}
+                count += 1
+
+        # print(dict_companies)
+        count = 0
+        with open("../../financial.csv") as fin:
+            financial_file_reader = csv.DictReader(fin, delimiter=",")
+            for line in financial_file_reader:
+                if line['ticker'] == '':
+                    line['ticker'] = None
+                if line['ebitda'] == '':
+                    line['ebitda'] = None
+                if line['sales'] == '':
+                    line['sales'] = None
+                if line['net_profit'] == '':
+                    line['net_profit'] = None
+                if line['market_price'] == '':
+                    line['market_price'] = None
+                if line['net_debt'] == '':
+                    line['net_debt'] = None
+                if line['assets'] == '':
+                    line['assets'] = None
+                if line['equity'] == '':
+                    line['equity'] = None
+                if line['cash_equivalents'] == '':
+                    line['cash_equivalents'] = None
+                if line['liabilities'] == '':
+                    line['liabilities'] = None
+                dict_financial[count] = dict(line)
+                count += 1
+        # print(dict_financial)
+        create_db(dict_companies, dict_financial)
+        #print('Database created successfully!')
+  learner_created: true
+- name: ToptenCompanies.py
+  visible: true
+  learner_created: true
+- name: investor.db
+  visible: true
+  learner_created: true
+feedback_link: https://hyperskill.org/learn/step/20549#comment
+status: Solved
+feedback:
+  message: Well done! You've finished the project. Select a new project on <a href="https://hyperskill.org/projects">Hyperskill</a>
+    to continue learning.
+  time: "Sat, 03 Jun 2023 20:27:23 UTC"
+record: -1

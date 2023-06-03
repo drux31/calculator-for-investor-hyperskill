@@ -1,0 +1,8 @@
+#folder
+.idea/
+*__pycahce__/
+*test/
+*env/
+
+#files
+*.env
